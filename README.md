@@ -6,26 +6,11 @@ The current implementation provisions the development network. Staging and produ
 
 ## Architecture
 
-The development environment spans two Availability Zones and separates traffic into public, application, and data tiers:
+The target platform architecture is designed for high availability and horizontal scaling across two Availability Zones:
 
-```text
-                              Internet
-                                  |
-                         Internet Gateway
-                                  |
-          +---------------------------------------+
-          |             AWS VPC (/20)             |
-          |                                       |
-          |  AZ A                  AZ B           |
-          |  public subnet          public subnet  |
-          |                                       |
-          |  application subnet     application   |
-          |          \              subnet        |
-          |           +--- Regional NAT Gateway   |
-          |                                       |
-          |  data subnet            data subnet   |
-          +---------------------------------------+
-```
+![Yiro highly available architecture](assets/yiro-highly-available-architecture.png)
+
+The development environment currently provisions the network foundation for this design, with public, application, and data subnets across two Availability Zones.
 
 - **Highly available network layout:** public, application, and data subnets are distributed across two distinct Availability Zones.
 - **Controlled egress:** application subnets reach the internet through an AWS Regional NAT Gateway; AWS manages its IP addresses and AZ coverage.
