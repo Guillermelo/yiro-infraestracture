@@ -1,131 +1,118 @@
-# Infraestructura Terraform
+# Yiro AWS Infrastructure
 
-Boilerplate para organizar infraestructura por entorno y módulos reutilizables.
+Terraform infrastructure for Yiro. The repository provides a highly available network foundation for deploying application workloads on AWS, while keeping environments isolated and infrastructure reusable.
 
-## Estructura objetivo
+The current implementation provisions the development network. Staging and production root modules are in place for the same module-based deployment model as the platform grows.
+
+## Architecture
+
+The development environment spans two Availability Zones and separates traffic into public, application, and data tiers:
 
 ```text
-aws-ride-hailing-infra/
-├── README.md
-├── .gitignore
-├── Makefile
-├── versions.tf
-│
-├── modules/                         # Bloques reutilizables, sin valores de prod hardcodeados
-│   ├── network/
-│   │   ├── main.tf                   # VPC, subnets, IGW, NAT, route tables
-│   │   ├── variables.tf
-│   │   ├── outputs.tf
-│   │   └── versions.tf
-│   │
-│   ├── security/
-│   │   ├── main.tf                   # SG CloudFront/ALB, backend, socket, Redis
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   │
-│   ├── alb/
-│   │   ├── main.tf                   # ALB, listeners, TG backend/socket, rules por path
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   │
-│   ├── compute/
-│   │   ├── main.tf                   # Launch templates y ASG
-│   │   ├── user_data.sh.tftpl
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   │
-│   ├── cloudfront/
-│   │   ├── main.tf                   # Distribution, WAF association, origins/behaviors
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   │
-│   ├── redis/
-│   │   ├── main.tf                   # ElastiCache replication group/subnet group
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   │
-│   ├── dns/
-│   │   ├── main.tf                   # Route 53, ACM validation records
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   │
-│   ├── monitoring/
-│   │   ├── main.tf                   # CloudWatch log groups, alarms, dashboards
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   │
-│   └── iam/
-│       ├── main.tf                   # EC2 roles/profiles, GitHub OIDC roles
-│       ├── policies.tf
-│       ├── variables.tf
-│       └── outputs.tf
-│
-├── environments/
-│   ├── dev/
-│   │   ├── backend.tf                # Remote state: bucket/key/region
-│   │   ├── providers.tf
-│   │   ├── main.tf                   # Ensambla los módulos
-│   │   ├── variables.tf
-│   │   ├── terraform.tfvars.example
-│   │   └── outputs.tf
-│   │
-│   └── prod/
-│       ├── backend.tf
-│       ├── providers.tf
-│       ├── main.tf
-│       ├── variables.tf
-│       ├── terraform.tfvars.example
-│       └── outputs.tf
-│
-├── policies/                         # JSON solo si una policy se vuelve muy grande
-│   ├── ec2-secrets-read.json
-│   └── github-deploy.json
-│
-├── scripts/
-│   ├── validate.sh
-│   └── plan.sh
-│
-└── .github/
-    └── workflows/
-        ├── terraform-plan.yml
-        └── terraform-apply.yml
+                              Internet
+                                  |
+                         Internet Gateway
+                                  |
+          +---------------------------------------+
+          |             AWS VPC (/20)             |
+          |                                       |
+          |  AZ A                  AZ B           |
+          |  public subnet          public subnet  |
+          |                                       |
+          |  application subnet     application   |
+          |          \              subnet        |
+          |           +--- Regional NAT Gateway   |
+          |                                       |
+          |  data subnet            data subnet   |
+          +---------------------------------------+
 ```
 
-> Esta es la estructura objetivo. El repositorio actual la irá incorporando gradualmente; por ahora también existe el entorno `staging`.
+- **Highly available network layout:** public, application, and data subnets are distributed across two distinct Availability Zones.
+- **Controlled egress:** application subnets reach the internet through an AWS Regional NAT Gateway; AWS manages its IP addresses and AZ coverage.
+- **Network isolation:** data subnets have no default internet route, and no subnet assigns public IP addresses automatically.
+- **Reusable Terraform modules:** environment root modules compose shared modules without sharing Terraform state.
+- **Remote state:** each environment uses a separate S3 backend and native S3 locking.
 
-## Inicio rápido
+> The current network is the platform foundation. Application Load Balancers, security groups, compute, and data services have not yet been implemented.
 
-1. Elige un entorno, por ejemplo `environments/dev`.
-2. Crea tus variables locales sin versionarlas:
+## Repository layout
 
-   ```bash
-   cd environments/dev
-   cp terraform.tfvars.example terraform.tfvars
-   ```
+```text
+.
+├── environments/
+│   ├── dev/                 # Active network deployment
+│   ├── staging/             # Environment root module
+│   └── prod/                # Environment root module
+├── modules/
+│   ├── network/             # VPC, subnets, routing, IGW, and Regional NAT
+│   └── project-metadata/    # Common resource tags
+├── docs/                    # Architecture, operations, and ADRs
+└── .github/workflows/       # Terraform formatting and validation CI
+```
 
-3. Añade el proveedor y los recursos que necesites. Los entornos ya usan el backend remoto S3; consulta la [documentación del estado](docs/operations/terraform-state.md).
-4. Inicializa y revisa los cambios:
+## Environments
 
-   ```bash
-   terraform init
-   terraform fmt -recursive
-   terraform validate
-   terraform plan
-   ```
+Each directory under `environments/` is an independent Terraform root module with its own state:
 
-> No compartas archivos `*.tfvars`, estados ni credenciales. Define secretos mediante el gestor de secretos de tu proveedor o variables de entorno (`TF_VAR_*`).
+| Environment | Status | Current scope |
+| --- | --- | --- |
+| `dev` | Active | Two-AZ VPC and network tiers |
+| `staging` | Scaffolded | Metadata and backend configuration |
+| `prod` | Scaffolded | Metadata and backend configuration |
 
-## Documentación
+## Getting started
 
-Consulta el [índice de documentación](docs/README.md) para arquitectura, desarrollo, operaciones y decisiones técnicas.
+Prerequisites:
 
-## Convenciones
+- Terraform `>= 1.10.0`
+- AWS credentials with permissions appropriate for the selected environment
 
-- Cada directorio bajo `environments/` es un root module y conserva un estado separado.
-- Reutiliza recursos mediante `modules/`; un módulo no debe incluir configuración de backend.
-- Duplica `modules/project-metadata` como base para módulos nuevos y documenta sus variables y outputs.
-- Mantén los valores específicos de cada entorno en `terraform.tfvars` (ignorado por Git); el archivo `terraform.tfvars.example` solo contiene valores de muestra.
+Configure and review the development environment:
 
-## Mejoras futuras
+```bash
+cd environments/dev
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with the project name, AWS Region, and two AZs.
+terraform init
+terraform fmt -check -recursive
+terraform validate
+terraform plan
+```
 
-- Incorporar un firewall para el tráfico saliente a través del NAT Gateway, con una lista permitida de dominios específicos, para reforzar la seguridad.
+Review the plan carefully before applying it. Do not commit `terraform.tfvars`, Terraform state, plan files, or credentials.
+
+## Configuration
+
+`environments/dev/terraform.tfvars.example` documents the required inputs:
+
+```hcl
+project_name       = "my-project"
+aws_region         = "us-east-1"
+vpc_cidr           = "10.0.0.0/20"
+availability_zones = ["us-east-1a", "us-east-1b"]
+```
+
+The network module requires exactly two distinct Availability Zones. Keep their order stable after an environment is deployed to prevent subnet CIDR reassignment.
+
+## Validation and CI
+
+GitHub Actions runs the following checks on pull requests and on pushes to `main`:
+
+```bash
+terraform fmt -check -recursive
+terraform -chdir=environments/<environment> init -backend=false -input=false
+terraform -chdir=environments/<environment> validate
+```
+
+Run `terraform plan` from the affected environment before proposing any infrastructure change.
+
+## Documentation
+
+- [Architecture](docs/architecture/README.md)
+- [Development workflow](docs/development/README.md)
+- [Terraform state operations](docs/operations/terraform-state.md)
+- [Architecture decisions](docs/decisions/README.md)
+
+## Roadmap
+
+The network is designed to support future application components, including load balancing, security groups, compute, managed data services, observability, and DNS.
