@@ -1,29 +1,29 @@
-# Estado remoto de Terraform
+# Terraform remote state
 
-## Configuración
+## Configuration
 
-El estado se almacena en el bucket S3 `yiro-terraform-state-741793812640`, en la región `sa-east-1`.
+State is stored in the `yiro-terraform-state-741793812640` S3 bucket in the `sa-east-1` Region.
 
-| Entorno | Clave S3 |
+| Environment | S3 key |
 | --- | --- |
 | `dev` | `dev/terraform.tfstate` |
 | `staging` | `staging/terraform.tfstate` |
 | `prod` | `prod/terraform.tfstate` |
 
-Cada root module tiene su propio `backend.tf`. El backend usa cifrado S3 (`AES256`) y bloqueo nativo de S3 (`use_lockfile = true`).
+Each root module has its own `backend.tf`. The backend uses S3 encryption (`AES256`) and native S3 locking (`use_lockfile = true`).
 
-## Protección del bucket
+## Bucket protection
 
-El bucket fue creado fuera de Terraform (bootstrap), porque un backend debe existir antes de ejecutar `terraform init`. Tiene:
+The bucket was created outside Terraform during bootstrap because a backend must exist before `terraform init` can run. It has:
 
-- versionado habilitado;
-- bloqueo de acceso público habilitado;
-- Object Ownership configurado como `BucketOwnerEnforced`;
-- cifrado por defecto SSE-S3 (`AES256`).
+- versioning enabled;
+- public-access blocking enabled;
+- Object Ownership set to `BucketOwnerEnforced`;
+- default SSE-S3 encryption (`AES256`).
 
-## Uso
+## Usage
 
-Con credenciales AWS válidas y permisos para el bucket:
+With valid AWS credentials and permissions for the bucket:
 
 ```bash
 cd environments/dev
@@ -31,11 +31,11 @@ terraform init
 terraform plan
 ```
 
-Terraform obtiene las credenciales mediante la cadena estándar de AWS, por ejemplo `AWS_PROFILE`, variables de entorno, SSO o un rol IAM. El repositorio define `AWS_PROFILE=default` en `.envrc`.
+Terraform obtains credentials through the standard AWS provider chain, for example `AWS_PROFILE`, environment variables, SSO, or an IAM role. The repository sets `AWS_PROFILE=default` in `.envrc`.
 
-## Recuperación y mantenimiento
+## Recovery and maintenance
 
-- No edites ni elimines objetos de estado manualmente.
-- El versionado permite recuperar una versión anterior ante una modificación accidental. Revisa primero el historial y restaura solo con revisión explícita.
-- Si queda un archivo de bloqueo después de una interrupción, verifica que no haya otra operación Terraform en curso antes de usar `terraform force-unlock`.
-- Conserva permisos mínimos: lectura/escritura de los prefijos de estado necesarios y permisos para administrar el archivo `.tflock`.
+- Do not manually edit or delete state objects.
+- Versioning allows recovery of a previous version after an accidental change. Review the history first and restore only with explicit review.
+- If a lock file remains after an interruption, verify that no other Terraform operation is running before using `terraform force-unlock`.
+- Follow least privilege: grant read/write access only to the required state prefixes and permissions to manage the `.tflock` file.

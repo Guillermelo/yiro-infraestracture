@@ -1,11 +1,11 @@
-# Decisiones de arquitectura
+# Architecture decisions
 
-Registra aquí decisiones que afecten la arquitectura, seguridad, coste, operación o compatibilidad del proyecto.
+Record decisions that affect the project's architecture, security, cost, operations, or compatibility.
 
-## Formato
+## Format
 
-Crea archivos con el nombre `NNNN-titulo-corto.md` y las secciones: **Contexto**, **Decisión**, **Consecuencias** y **Estado**. No modifiques una decisión aceptada para cambiar su sentido: crea otra que la sustituya y enlázala.
+Create files named `NNNN-short-title.md` with the following sections: **Context**, **Decision**, **Consequences**, and **Status**. Do not modify an accepted decision to change its intent; create a superseding ADR and link to it instead.
 
-## Registro
+## Register
 
-Aún no hay ADRs registrados.
+No ADRs have been recorded yet.

@@ -1,40 +1,30 @@
-# Arquitectura
+# Architecture
 
-## Estructura actual
+## Current structure
 
-- `environments/`: root modules de Terraform independientes para `dev`, `staging` y `prod`.
-- `modules/`: módulos Terraform reutilizables; no configuran backend ni mantienen estado propio.
-- `docs/`: documentación técnica y operativa.
+- `environments/`: independent Terraform root modules for `dev`, `staging`, and `prod`.
+- `modules/`: reusable Terraform modules; they do not configure a backend or maintain their own state.
+- `docs/`: technical and operational documentation.
 
-Cada entorno mantiene un archivo de estado remoto independiente en S3. Consulta [Operaciones: estado Terraform](../operations/terraform-state.md).
+Each environment maintains an independent remote state file in S3. See [Terraform state operations](../operations/terraform-state.md).
 
-A medida que se incorporen componentes, documentar aquí sus diagramas, dependencias, límites de red, flujos de datos y responsables.
+As components are added, document their diagrams, dependencies, network boundaries, data flows, and owners here.
 
-## Red de dev
+## Development network
 
-`environments/dev` integra `modules/network` y recibe las etiquetas de
-`project_metadata`. No utiliza Kubernetes. ALB, security groups y backend aún
-no están implementados.
+`environments/dev` composes `modules/network` and receives its tags from `project_metadata`. It does not use Kubernetes. An ALB, security groups, and the application backend have not yet been implemented.
 
-- VPC IPv4 `/20`, dos AZ distintas y seis subnets `/24`.
-- Públicas: offsets 0 y 1, ruta por defecto al Internet Gateway, para el futuro ALB.
-- Aplicación: offsets 2 y 3, tabla compartida con salida al Regional NAT Gateway.
-- Datos: offsets 4 y 5, solo ruta local; el aislamiento de acceso requiere security groups.
-- RNAT público automático, sin subnet ni EIP administrada por Terraform.
-- Las instancias no reciben IP pública automáticamente.
+- IPv4 `/20` VPC, two distinct Availability Zones, and six `/24` subnets.
+- Public subnets: offsets 0 and 1, with a default route to the Internet Gateway, reserved for the future ALB.
+- Application subnets: offsets 2 and 3, using a shared route table with egress through the Regional NAT Gateway.
+- Data subnets: offsets 4 and 5, with only a local route; access isolation requires security groups.
+- Automatic public Regional NAT Gateway, without a Terraform-managed subnet or Elastic IP.
+- Instances do not receive public IP addresses automatically.
 
-El proveedor AWS requiere versión >= 6.24.0 y < 7.0.0. Dev requiere Terraform
->= 1.10.0 por el bloqueo nativo S3 ya configurado. La región, CIDR y AZ se
-configuran por entorno; ver `environments/dev/terraform.tfvars.example`.
-Mantener estable el orden de las AZ evita reasignar CIDRs.
+The AWS provider must be `>= 6.24.0, < 7.0.0`. Development requires Terraform `>= 1.10.0` for the configured native S3 locking. Region, CIDR, and Availability Zones are configured per environment; see `environments/dev/terraform.tfvars.example`. Keep the Availability Zone order stable to avoid subnet CIDR reassignment.
 
-RNAT puede tardar hasta 60 minutos en expandirse a una nueva AZ; durante ese
-intervalo puede procesar tráfico en otra AZ. Un único ID no implica el costo
-de un solo NAT zonal: revisar cargos por AZ, procesamiento e IPv4. Para IPs
-fijas en allowlists, evaluar modo manual antes de desplegar.
+A Regional NAT Gateway can take up to 60 minutes to expand to a new Availability Zone; during that interval, it may process traffic in another Availability Zone. A single ID does not mean the cost of a single zonal NAT gateway: review Availability Zone, processing, and IPv4 charges. For fixed IP allowlists, evaluate manual mode before deployment.
 
-No se debe aplicar sin revisar el plan. Si ya existen NAT zonales, cambiar
-las rutas puede interrumpir conexiones y cambiar IPs de salida; planificar
-una ventana de mantenimiento.
+Do not apply changes without reviewing the plan. If zonal NAT gateways already exist, changing routes can interrupt connections and change egress IP addresses; schedule a maintenance window.
 
-Referencia: [AWS Regional NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html).
+Reference: [AWS Regional NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html).

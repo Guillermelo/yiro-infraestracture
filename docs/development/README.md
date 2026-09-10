@@ -1,8 +1,8 @@
-# Desarrollo de infraestructura
+# Infrastructure development
 
-1. Trabaja en el directorio del entorno afectado (`environments/dev`, `environments/staging` o `environments/prod`).
-2. Mantén valores locales o sensibles en `terraform.tfvars` o mediante `TF_VAR_*`; no los versionas.
-3. Antes de proponer cambios de infraestructura, ejecuta:
+1. Work in the affected environment directory (`environments/dev`, `environments/staging`, or `environments/prod`).
+2. Keep local or sensitive values in `terraform.tfvars` or through `TF_VAR_*`; do not commit them.
+3. Before proposing infrastructure changes, run:
 
    ```bash
    terraform init
@@ -11,4 +11,4 @@
    terraform plan
    ```
 
-4. Revisa el plan antes de aplicar. Los recursos compartidos deben quedar documentados en `docs/architecture/` y las decisiones significativas en `docs/decisions/`.
+4. Review the plan before applying it. Document shared resources in `docs/architecture/` and significant decisions in `docs/decisions/`.

@@ -1,14 +1,14 @@
-# Documentación
+# Documentation
 
-Este directorio centraliza la documentación mantenida del proyecto. Cada documento debe describir el estado actual, incluir enlaces a material relacionado y evitar secretos, credenciales o valores de `*.tfvars`.
+This directory contains the maintained project documentation. Every document must describe the current state, link to related material, and exclude secrets, credentials, and values from `*.tfvars` files.
 
-## Índice
+## Index
 
-- [Arquitectura](architecture/README.md): estructura, límites y decisiones técnicas del sistema.
-- [Desarrollo](development/README.md): convenciones para modificar y validar infraestructura.
-- [Operaciones](operations/terraform-state.md): backend remoto, acceso y recuperación del estado Terraform.
-- [Decisiones](decisions/README.md): registro de decisiones de arquitectura (ADR).
+- [Architecture](architecture/README.md): system structure, boundaries, and technical decisions.
+- [Development](development/README.md): conventions for changing and validating infrastructure.
+- [Operations](operations/terraform-state.md): remote backend, access, and Terraform state recovery.
+- [Decisions](decisions/README.md): architecture decision record (ADR) log.
 
-## Convención para documentos nuevos
+## Convention for new documents
 
-Ubica cada documento en la categoría correspondiente y usa nombres en minúsculas con guiones. Para decisiones relevantes, crea un ADR en `decisions/` con el formato `NNNN-titulo-corto.md` y enlázalo desde su índice.
+Place each document in the appropriate category and use lowercase, hyphenated filenames. For significant decisions, create an ADR under `decisions/` using the `NNNN-short-title.md` format and link to it from that directory's index.
