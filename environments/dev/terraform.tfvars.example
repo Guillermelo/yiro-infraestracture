@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars and adjust the values.
+project_name = "my-project"
+
+aws_region         = "us-east-1"
+vpc_cidr           = "10.0.0.0/20"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+additional_tags = {
+  Owner = "platform-team"
+}

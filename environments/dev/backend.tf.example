@@ -1,0 +1,12 @@
+# Descomenta y adapta este bloque antes de terraform init si usas un backend S3.
+# No incluyas credenciales aquí: usa IAM, variables de entorno o perfiles.
+#
+# terraform {
+#   backend "s3" {
+#     bucket       = "mi-bucket-de-estado"
+#     key          = "<environment>/terraform.tfstate"
+#     region       = "us-east-1"
+#     encrypt      = true
+#     use_lockfile = true
+#   }
+# }

@@ -1,0 +1,6 @@
+# Copia este archivo como terraform.tfvars y adapta los valores.
+project_name = "my-project"
+
+additional_tags = {
+  Owner = "platform-team"
+}
