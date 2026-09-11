@@ -5,6 +5,11 @@ aws_region         = "us-east-1"
 vpc_cidr           = "10.0.0.0/20"
 availability_zones = ["us-east-1a", "us-east-1b"]
 
+alb_domain_name = "migration.example.com"
+
+backend_health_check_path = "/health"
+sockets_health_check_path = "/health"
+
 additional_tags = {
   Owner = "platform-team"
 }

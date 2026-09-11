@@ -1,3 +1,8 @@
+output "certificate_validation_records" {
+  description = "DNS records to configure in Squarespace."
+  value       = module.alb.certificate_validation_records
+}
+
 output "vpc_id" {
   description = "Environment VPC ID."
   value       = module.network.vpc_id
